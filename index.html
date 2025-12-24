@@ -1,45 +1,96 @@
-// Твоя секретная ссылка из терминала (обязательно с /status на конце)
-const API_URL = "https://soft-chairs-report.loca.lt/status";
-
-async function fastUpdate() {
-    try {
-        // Делаем запрос к твоему компьютеру
-        const response = await fetch(API_URL, {
-            headers: {
-                "Bypass-Tunnel-Reminder": "true" // Хитрый заголовок, чтобы пропустить окно Localtunnel
-            }
-        });
-        const data = await response.json();
-
-        const statusEl = document.getElementById('status');
-        const slotsEl = document.getElementById('slots');
-        const pList = document.getElementById('players');
-
-        if (data.online) {
-            statusEl.innerHTML = '<span style="color:#55FF55; text-shadow: 0 0 5px #000;">● ОНЛАЙН (ПРЯМОЙ)</span>';
-            slotsEl.innerText = `${data.players} / ${data.max}`;
-            
-            if (data.list && data.list.length > 0) {
-                pList.innerHTML = data.list.map(p => `
-                    <div class="player-card">
-                        <img src="https://minotar.net/avatar/${p}/16" width="16" height="16" style="margin-right:10px; image-rendering: pixelated;">
-                        <span>${p}</span>
-                    </div>
-                `).join('');
-            } else {
-                pList.innerHTML = '<div style="color:#444; text-align:center; margin-top:70px; font-size:12px;">СЕРВЕР ПУСТ</div>';
-            }
-        } else {
-            statusEl.innerHTML = '<span style="color:#ff5555">● СЕРВЕР ВЫКЛЮЧЕН</span>';
-            pList.innerHTML = "";
-            slotsEl.innerText = "0 / 0";
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exizdon Ultimate Monitor</title>
+    <style>
+        /* ДИЗАЙН: Здесь мы объясняем браузеру, как должен выглядеть сайт */
+        @font-face {
+            font-family: 'Minecraft';
+            src: url('https://db.onlinewebfonts.com/t/6ab5395e22295663731804eedf05322b.woff2') format('woff2');
         }
-    } catch (e) {
-        console.log("Ждем запуска API...");
-        document.getElementById('status').innerHTML = '<span style="color:#ffff55">ПОДКЛЮЧЕНИЕ К API...</span>';
-    }
-}
+        body { background: #1a1a1a; color: #fff; font-family: 'Minecraft', sans-serif; display: flex; justify-content: center; padding: 20px; }
+        .mc-container { background: #C6C6C6; border: 4px solid #585858; border-top-color: #FFF; border-left-color: #FFF; width: 100%; max-width: 400px; padding: 20px; box-shadow: 0 8px 0px #000; }
+        .mc-header { background: #000; border: 4px solid #333; padding: 15px; text-align: center; }
+        h1 { color: #FFFF55; text-shadow: 2px 2px #3F3F00; margin: 0; font-size: 20px; }
+        .stat-box { background: #333; border: 2px solid #000; margin: 10px 0; padding: 10px; display: flex; justify-content: space-between; font-size: 14px; align-items: center; }
+        .player-list { background: #000; border: 4px solid #585858; height: 180px; overflow-y: auto; padding: 10px; }
+        .player-card { display: flex; align-items: center; padding: 5px; border-bottom: 1px solid #222; font-size: 13px; }
+        .player-card img { margin-right: 10px; image-rendering: pixelated; }
+        .status-online { color: #55FF55; text-shadow: 1px 1px #000; }
+        .status-offline { color: #FF5555; }
+    </style>
+</head>
+<body>
 
-// Теперь мы можем проверять онлайн ОЧЕНЬ часто (каждую секунду)
-setInterval(fastUpdate, 1000);
-fastUpdate();
+<div class="mc-container">
+    <div class="mc-header">
+        <h1>EXIZDON LIVE</h1>
+        <div style="font-size: 10px; color: #888; margin-top: 5px;">Собственный API Движок</div>
+    </div>
+
+    <div class="stat-box">
+        <span>СТАТУС:</span>
+        <span id="status">ПОДКЛЮЧЕНИЕ...</span>
+    </div>
+
+    <div class="stat-box">
+        <span>ИГРОКИ:</span>
+        <span id="slots" style="color:#FFFF55">0 / 0</span>
+    </div>
+
+    <div id="players" class="player-list">
+        </div>
+    
+    <div style="text-align: center; font-size: 9px; color: #555; margin-top: 10px;">
+        ОБНОВЛЕНИЕ: 1 СЕКУНДА
+    </div>
+</div>
+
+<script>
+    /* ЛОГИКА: Здесь мы заставляем сайт работать */
+    const API_URL = "https://soft-chairs-report.loca.lt/status";
+
+    async function fastUpdate() {
+        try {
+            const response = await fetch(API_URL, {
+                headers: { "Bypass-Tunnel-Reminder": "true" }
+            });
+            const data = await response.json();
+
+            const statusEl = document.getElementById('status');
+            const slotsEl = document.getElementById('slots');
+            const pList = document.getElementById('players');
+
+            if (data.online) {
+                statusEl.innerHTML = '<span class="status-online">● ОНЛАЙН</span>';
+                slotsEl.innerText = data.players + " / " + data.max;
+                
+                if (data.list && data.list.length > 0) {
+                    pList.innerHTML = data.list.map(p => `
+                        <div class="player-card">
+                            <img src="https://minotar.net/avatar/${p}/16" width="16" height="16">
+                            <span>${p}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    pList.innerHTML = '<div style="color:#444; text-align:center; margin-top:70px;">НЕТ ИГРОКОВ</div>';
+                }
+            } else {
+                statusEl.innerHTML = '<span class="status-offline">● ВЫКЛЮЧЕН</span>';
+                pList.innerHTML = "";
+                slotsEl.innerText = "0 / 0";
+            }
+        } catch (e) {
+            document.getElementById('status').innerText = "ОЖИДАНИЕ API...";
+        }
+    }
+
+    // Запускаем проверку каждую секунду
+    setInterval(fastUpdate, 1000);
+    fastUpdate();
+</script>
+
+</body>
+</html>
