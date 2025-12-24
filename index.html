@@ -1,0 +1,45 @@
+// Твоя секретная ссылка из терминала (обязательно с /status на конце)
+const API_URL = "https://soft-chairs-report.loca.lt/status";
+
+async function fastUpdate() {
+    try {
+        // Делаем запрос к твоему компьютеру
+        const response = await fetch(API_URL, {
+            headers: {
+                "Bypass-Tunnel-Reminder": "true" // Хитрый заголовок, чтобы пропустить окно Localtunnel
+            }
+        });
+        const data = await response.json();
+
+        const statusEl = document.getElementById('status');
+        const slotsEl = document.getElementById('slots');
+        const pList = document.getElementById('players');
+
+        if (data.online) {
+            statusEl.innerHTML = '<span style="color:#55FF55; text-shadow: 0 0 5px #000;">● ОНЛАЙН (ПРЯМОЙ)</span>';
+            slotsEl.innerText = `${data.players} / ${data.max}`;
+            
+            if (data.list && data.list.length > 0) {
+                pList.innerHTML = data.list.map(p => `
+                    <div class="player-card">
+                        <img src="https://minotar.net/avatar/${p}/16" width="16" height="16" style="margin-right:10px; image-rendering: pixelated;">
+                        <span>${p}</span>
+                    </div>
+                `).join('');
+            } else {
+                pList.innerHTML = '<div style="color:#444; text-align:center; margin-top:70px; font-size:12px;">СЕРВЕР ПУСТ</div>';
+            }
+        } else {
+            statusEl.innerHTML = '<span style="color:#ff5555">● СЕРВЕР ВЫКЛЮЧЕН</span>';
+            pList.innerHTML = "";
+            slotsEl.innerText = "0 / 0";
+        }
+    } catch (e) {
+        console.log("Ждем запуска API...");
+        document.getElementById('status').innerHTML = '<span style="color:#ffff55">ПОДКЛЮЧЕНИЕ К API...</span>';
+    }
+}
+
+// Теперь мы можем проверять онлайн ОЧЕНЬ часто (каждую секунду)
+setInterval(fastUpdate, 1000);
+fastUpdate();
